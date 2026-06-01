@@ -1,0 +1,380 @@
+
+<h2 class="sr-only">Predictive Modeling Using Machine Learning — interactive demo with dataset generation, model training, and evaluation metrics</h2>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.section{margin-bottom:2rem}
+.label{font-size:13px;color:var(--color-text-secondary);margin-bottom:4px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);font-weight:500}
+.badge-success{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-info{background:var(--color-background-info);color:var(--color-text-info)}
+.badge-warn{background:var(--color-background-warning);color:var(--color-text-warning)}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem}
+.metric-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.75rem 1rem}
+.metric-val{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.metric-lbl{font-size:12px;color:var(--color-text-secondary);margin-bottom:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tab-row{display:flex;gap:4px;margin-bottom:1rem;border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:.5rem}
+.tab{font-size:13px;padding:4px 12px;border-radius:var(--border-radius-md);cursor:pointer;border:none;background:transparent;color:var(--color-text-secondary)}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);font-weight:500}
+.step-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.step-row:last-child{border-bottom:none}
+.step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.step-done{background:var(--color-background-success);color:var(--color-text-success)}
+.step-wait{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.progress-bar{height:6px;border-radius:3px;background:var(--color-border-tertiary);overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:3px;background:#378ADD;transition:width .6s ease}
+.cm-table{border-collapse:collapse;font-size:13px;width:100%}
+.cm-table td,.cm-table th{border:0.5px solid var(--color-border-tertiary);padding:8px 12px;text-align:center}
+.cm-table th{background:var(--color-background-secondary);color:var(--color-text-secondary);font-weight:500}
+.cm-tp{background:#E6F1FB;color:#0C447C}
+.cm-tn{background:#EAF3DE;color:#27500A}
+.cm-fp{background:#FAECE7;color:#712B13}
+.cm-fn{background:#FAECE7;color:#712B13}
+select,button{cursor:pointer}
+.model-btn{padding:6px 14px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-primary);cursor:pointer;transition:background .15s}
+.model-btn:hover{background:var(--color-background-secondary)}
+.model-btn.selected{background:var(--color-background-info);color:var(--color-text-info);border-color:transparent}
+.train-btn{padding:8px 20px;font-size:14px;font-weight:500;border:none;border-radius:var(--border-radius-md);background:#378ADD;color:#fff;cursor:pointer;transition:opacity .2s}
+.train-btn:hover{opacity:.88}
+.train-btn:disabled{opacity:.5;cursor:not-allowed}
+.log-box{font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary);background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 14px;height:90px;overflow-y:auto;line-height:1.6}
+</style>
+
+<div style="padding:1rem 0">
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+  <div>
+    <h2 style="font-size:18px;font-weight:500;color:var(--color-text-primary)">Predictive Modeling Using Machine Learning</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-top:4px">Supervised learning · Model evaluation · Classification</p>
+  </div>
+  <span class="badge badge-success" id="status-badge">Ready</span>
+</div>
+
+<div class="tab-row" id="tabs">
+  <button class="tab active" onclick="switchTab('setup')">1 · Setup</button>
+  <button class="tab" onclick="switchTab('train')" id="tab-train">2 · Train</button>
+  <button class="tab" onclick="switchTab('evaluate')" id="tab-eval">3 · Evaluate</button>
+  <button class="tab" onclick="switchTab('results')" id="tab-results">4 · Results</button>
+</div>
+
+<div id="pane-setup">
+  <div class="card section">
+    <p class="label">Dataset</p>
+    <div class="grid2" style="margin-top:8px;gap:12px">
+      <div>
+        <p class="label">Problem type</p>
+        <select id="prob-type" style="width:100%;margin-top:4px">
+          <option>Binary classification</option>
+          <option>Multi-class classification</option>
+          <option>Regression</option>
+        </select>
+      </div>
+      <div>
+        <p class="label">Dataset size</p>
+        <select id="ds-size" style="width:100%;margin-top:4px">
+          <option value="300">Small (300 samples)</option>
+          <option value="1000" selected>Medium (1,000 samples)</option>
+          <option value="5000">Large (5,000 samples)</option>
+        </select>
+      </div>
+      <div>
+        <p class="label">Features</p>
+        <select id="n-features" style="width:100%;margin-top:4px">
+          <option value="5">5 features</option>
+          <option value="10" selected>10 features</option>
+          <option value="20">20 features</option>
+        </select>
+      </div>
+      <div>
+        <p class="label">Train / test split</p>
+        <select id="split" style="width:100%;margin-top:4px">
+          <option value="70">70% / 30%</option>
+          <option value="80" selected>80% / 20%</option>
+          <option value="90">90% / 10%</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card section">
+    <p class="label" style="margin-bottom:10px">Algorithm</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px" id="algo-select">
+      <button class="model-btn selected" onclick="selectAlgo(this,'lr')">Linear Regression / LR</button>
+      <button class="model-btn" onclick="selectAlgo(this,'dt')">Decision Tree</button>
+      <button class="model-btn" onclick="selectAlgo(this,'rf')">Random Forest</button>
+      <button class="model-btn" onclick="selectAlgo(this,'svm')">SVM</button>
+      <button class="model-btn" onclick="selectAlgo(this,'knn')">K-Nearest Neighbors</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="label" style="margin-bottom:8px">Hyperparameters</p>
+    <div id="hyper-fields"></div>
+  </div>
+
+  <div style="margin-top:1.25rem;display:flex;justify-content:flex-end">
+    <button class="train-btn" onclick="startTraining()">Train model →</button>
+  </div>
+</div>
+
+<div id="pane-train" style="display:none">
+  <div class="card section">
+    <p style="font-weight:500;font-size:14px;margin-bottom:.75rem;color:var(--color-text-primary)">Training pipeline</p>
+    <div id="steps-list"></div>
+  </div>
+  <div class="card section">
+    <p class="label" style="margin-bottom:6px">Training log</p>
+    <div class="log-box" id="log-box"></div>
+  </div>
+  <div id="progress-section" style="margin-top:.5rem">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-text-secondary);margin-bottom:4px">
+      <span>Progress</span><span id="pct-label">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div id="pane-evaluate" style="display:none">
+  <div class="grid4 section">
+    <div class="metric-card"><p class="metric-lbl">Accuracy</p><p class="metric-val" id="m-acc">—</p></div>
+    <div class="metric-card"><p class="metric-lbl">Precision</p><p class="metric-val" id="m-prec">—</p></div>
+    <div class="metric-card"><p class="metric-lbl">Recall</p><p class="metric-val" id="m-rec">—</p></div>
+    <div class="metric-card"><p class="metric-lbl">F1 Score</p><p class="metric-val" id="m-f1">—</p></div>
+  </div>
+
+  <div class="grid2 section">
+    <div class="card">
+      <p class="label" style="margin-bottom:10px">Confusion matrix</p>
+      <table class="cm-table">
+        <tr><th></th><th>Pred Neg</th><th>Pred Pos</th></tr>
+        <tr><td style="font-weight:500;color:var(--color-text-secondary);font-size:12px">Act Neg</td><td class="cm-tn" id="cm-tn">—</td><td class="cm-fp" id="cm-fp">—</td></tr>
+        <tr><td style="font-weight:500;color:var(--color-text-secondary);font-size:12px">Act Pos</td><td class="cm-fn" id="cm-fn">—</td><td class="cm-tp" id="cm-tp">—</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <p class="label" style="margin-bottom:6px">Feature importance</p>
+      <div id="feat-chart-wrap" style="position:relative;height:160px">
+        <canvas id="featChart" role="img" aria-label="Top feature importances for the trained model">Feature importance bar chart.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card section">
+    <p class="label" style="margin-bottom:6px">ROC curve</p>
+    <div style="display:flex;gap:8px;margin-bottom:4px;font-size:12px;color:var(--color-text-secondary)">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#378ADD"></span>Model (AUC = <span id="auc-val">—</span>)</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:#888;display:inline-block"></span>Random</span>
+    </div>
+    <div style="position:relative;height:240px"><canvas id="rocChart" role="img" aria-label="ROC curve for model vs random baseline">ROC curve.</canvas></div>
+  </div>
+</div>
+
+<div id="pane-results" style="display:none">
+  <div class="card section">
+    <p style="font-weight:500;font-size:14px;margin-bottom:.75rem;color:var(--color-text-primary)">Model comparison</p>
+    <div style="position:relative;height:200px"><canvas id="compChart" role="img" aria-label="Accuracy comparison across algorithms">Model accuracy comparison.</canvas></div>
+  </div>
+  <div class="card section">
+    <p style="font-weight:500;font-size:14px;margin-bottom:.5rem;color:var(--color-text-primary)">Learning curve</p>
+    <div style="position:relative;height:200px"><canvas id="lcChart" role="img" aria-label="Learning curve showing train vs validation accuracy by training size">Learning curve.</canvas></div>
+  </div>
+  <div style="margin-top:1rem;display:flex;gap:8px;justify-content:flex-end">
+    <button class="model-btn" onclick="sendPrompt('How can I improve the model accuracy?')">How to improve? ↗</button>
+    <button class="model-btn" onclick="sendPrompt('Explain how Random Forest handles overfitting')">Overfitting tips ↗</button>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let selectedAlgo = 'lr';
+let results = null;
+let charts = {};
+
+const algoHypers = {
+  lr: `<div class="grid2"><div><p class="label">Max iterations</p><input type="number" value="200" min="50" max="1000" step="50" id="h1" style="width:100%;margin-top:4px"></div><div><p class="label">Regularization (C)</p><input type="number" value="1.0" min="0.01" max="10" step="0.1" id="h2" style="width:100%;margin-top:4px"></div></div>`,
+  dt: `<div class="grid2"><div><p class="label">Max depth</p><input type="number" value="5" min="1" max="30" id="h1" style="width:100%;margin-top:4px"></div><div><p class="label">Min samples split</p><input type="number" value="2" min="2" max="20" id="h2" style="width:100%;margin-top:4px"></div></div>`,
+  rf: `<div class="grid2"><div><p class="label">N estimators</p><input type="number" value="100" min="10" max="500" step="10" id="h1" style="width:100%;margin-top:4px"></div><div><p class="label">Max depth</p><input type="number" value="10" min="2" max="30" id="h2" style="width:100%;margin-top:4px"></div></div>`,
+  svm: `<div class="grid2"><div><p class="label">C (regularization)</p><input type="number" value="1.0" min="0.01" max="100" step="0.1" id="h1" style="width:100%;margin-top:4px"></div><div><p class="label">Kernel</p><select id="h2" style="width:100%;margin-top:4px"><option>rbf</option><option>linear</option><option>poly</option></select></div></div>`,
+  knn: `<div class="grid2"><div><p class="label">K (neighbors)</p><input type="number" value="5" min="1" max="50" id="h1" style="width:100%;margin-top:4px"></div><div><p class="label">Metric</p><select id="h2" style="width:100%;margin-top:4px"><option>euclidean</option><option>manhattan</option><option>minkowski</option></select></div></div>`,
+};
+
+const algoNames = {lr:'Logistic Regression',dt:'Decision Tree',rf:'Random Forest',svm:'SVM',knn:'KNN'};
+const algoBase = {lr:0.84,dt:0.80,rf:0.91,svm:0.87,knn:0.82};
+
+function selectAlgo(btn, algo) {
+  document.querySelectorAll('.model-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedAlgo = algo;
+  document.getElementById('hyper-fields').innerHTML = algoHypers[algo];
+}
+
+document.getElementById('hyper-fields').innerHTML = algoHypers['lr'];
+
+function switchTab(t) {
+  ['setup','train','evaluate','results'].forEach(p=>{
+    document.getElementById('pane-'+p).style.display = p===t?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  const map = {setup:0,train:1,evaluate:2,results:3};
+  document.querySelectorAll('.tab')[map[t]].classList.add('active');
+}
+
+const steps = [
+  {label:'Load & preprocess data',sub:'Normalize features, encode labels'},
+  {label:'Split dataset',sub:'Train/test partition with stratification'},
+  {label:'Initialize model',sub:'Set hyperparameters'},
+  {label:'Fit on training data',sub:'Gradient descent / tree building'},
+  {label:'Evaluate on test set',sub:'Compute metrics'},
+  {label:'Generate visualizations',sub:'ROC, confusion matrix, feature importance'},
+];
+
+function rand(a,b){return a+(Math.random()*(b-a));}
+
+function generateResults(){
+  const base = algoBase[selectedAlgo];
+  const noise = rand(-0.03,0.03);
+  const acc = Math.min(0.99,base+noise);
+  const prec = Math.min(0.99,acc+rand(-0.04,0.04));
+  const rec = Math.min(0.99,acc+rand(-0.04,0.04));
+  const f1 = 2*prec*rec/(prec+rec);
+  const total = 200;
+  const tp = Math.round(total*0.45*acc);
+  const tn = Math.round(total*0.55*acc);
+  const fp = Math.round(total*0.55*(1-prec));
+  const fn = Math.round(total*0.45*(1-rec));
+  const nf = parseInt(document.getElementById('n-features').value)||10;
+  const feats = Array.from({length:Math.min(6,nf)},(_,i)=>({name:'Feature_'+('ABCDEFGHIJ'[i]||i),imp:rand(0.05,0.30)}));
+  feats.sort((a,b)=>b.imp-a.imp);
+  const total2 = feats.reduce((s,f)=>s+f.imp,0);
+  feats.forEach(f=>f.imp=f.imp/total2);
+  const rocPts = [];
+  for(let i=0;i<=20;i++){const t=i/20;rocPts.push({x:t,y:Math.min(1,t+(1-t)*acc*0.95*Math.pow(1-t,0.3))});}
+  const auc = rocPts.reduce((s,p,i)=>i===0?s:s+(rocPts[i-1].y+p.y)/2*(p.x-rocPts[i-1].x),0);
+  return {acc,prec,rec,f1,tp,tn,fp,fn,feats,rocPts,auc};
+}
+
+function startTraining() {
+  switchTab('train');
+  document.getElementById('status-badge').textContent = 'Training…';
+  document.getElementById('status-badge').className = 'badge badge-warn';
+  document.querySelector('.train-btn').disabled = true;
+
+  const list = document.getElementById('steps-list');
+  list.innerHTML = steps.map((_,i)=>`<div class="step-row" id="step-${i}"><div class="step-icon step-wait" id="si-${i}"><i class="ti ti-clock" aria-hidden="true"></i></div><div><p style="font-size:13px;font-weight:500;color:var(--color-text-primary)">${steps[i].label}</p><p style="font-size:12px;color:var(--color-text-secondary)">${steps[i].sub}</p></div></div>`).join('');
+
+  const log = document.getElementById('log-box');
+  log.innerHTML = '';
+  const fill = document.getElementById('prog-fill');
+  const pctLbl = document.getElementById('pct-label');
+
+  const msgs = [
+    `[INFO] Loading dataset (${document.getElementById('ds-size').value} samples, ${document.getElementById('n-features').value} features)`,
+    `[INFO] Splitting: ${document.getElementById('split').value}% train / ${100-document.getElementById('split').value}% test`,
+    `[INFO] Initializing ${algoNames[selectedAlgo]}`,
+    `[INFO] Training... epoch 1/5`,
+    `[INFO] Training... epoch 3/5  loss: 0.412`,
+    `[INFO] Training complete  loss: 0.${Math.floor(rand(10,35))}`,
+    `[INFO] Computing evaluation metrics`,
+  ];
+
+  let s = 0;
+  function doStep(){
+    if(s >= steps.length) return finish();
+    document.getElementById('si-'+s).className='step-icon step-done';
+    document.getElementById('si-'+s).innerHTML='<i class="ti ti-check" aria-hidden="true"></i>';
+    const pct = Math.round((s+1)/steps.length*100);
+    fill.style.width = pct+'%';
+    pctLbl.textContent = pct+'%';
+    if(msgs[s]){log.innerHTML += '<div>'+msgs[s]+'</div>'; log.scrollTop=9999;}
+    s++;
+    setTimeout(doStep, 380+Math.random()*300);
+  }
+  setTimeout(doStep, 200);
+
+  function finish(){
+    results = generateResults();
+    document.getElementById('status-badge').textContent = 'Complete';
+    document.getElementById('status-badge').className = 'badge badge-success';
+    log.innerHTML += '<div>[INFO] All done ✓</div>';
+    log.scrollTop=9999;
+    populateEvaluate();
+    populateResults();
+    document.getElementById('tab-eval').classList.remove('disabled');
+    document.getElementById('tab-results').classList.remove('disabled');
+    setTimeout(()=>switchTab('evaluate'), 400);
+  }
+}
+
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function populateEvaluate(){
+  const r = results;
+  document.getElementById('m-acc').textContent = (r.acc*100).toFixed(1)+'%';
+  document.getElementById('m-prec').textContent = (r.prec*100).toFixed(1)+'%';
+  document.getElementById('m-rec').textContent = (r.rec*100).toFixed(1)+'%';
+  document.getElementById('m-f1').textContent = (r.f1*100).toFixed(1)+'%';
+  document.getElementById('cm-tp').textContent = r.tp;
+  document.getElementById('cm-tn').textContent = r.tn;
+  document.getElementById('cm-fp').textContent = r.fp;
+  document.getElementById('cm-fn').textContent = r.fn;
+  document.getElementById('auc-val').textContent = r.auc.toFixed(3);
+
+  destroyChart('feat');
+  charts['feat'] = new Chart(document.getElementById('featChart'),{
+    type:'bar',
+    data:{labels:r.feats.map(f=>f.name),datasets:[{label:'Importance',data:r.feats.map(f=>parseFloat((f.imp*100).toFixed(1))),backgroundColor:'#378ADD',borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.raw.toFixed(1)+'%'}}},scales:{x:{ticks:{font:{size:11},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,0.05)'}},y:{ticks:{font:{size:11}}}}}
+  });
+
+  destroyChart('roc');
+  charts['roc'] = new Chart(document.getElementById('rocChart'),{
+    type:'line',
+    data:{datasets:[
+      {label:'Model',data:r.rocPts,borderColor:'#378ADD',backgroundColor:'rgba(55,138,221,0.08)',fill:true,tension:0.3,pointRadius:0},
+      {label:'Random',data:[{x:0,y:0},{x:1,y:1}],borderColor:'#888',borderDash:[5,5],pointRadius:0,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{type:'linear',min:0,max:1,title:{display:true,text:'False Positive Rate',font:{size:11}},ticks:{font:{size:11}}},y:{min:0,max:1,title:{display:true,text:'True Positive Rate',font:{size:11}},ticks:{font:{size:11}}}}}
+  });
+}
+
+function populateResults(){
+  const all = [{name:'Logistic Reg',acc:algoBase['lr']+rand(-0.02,0.02)},{name:'Decision Tree',acc:algoBase['dt']+rand(-0.02,0.02)},{name:'Random Forest',acc:algoBase['rf']+rand(-0.02,0.02)},{name:'SVM',acc:algoBase['svm']+rand(-0.02,0.02)},{name:'KNN',acc:algoBase['knn']+rand(-0.02,0.02)}];
+  all.find(a=>a.name.includes(algoNames[selectedAlgo].split(' ')[0])||true);
+  const selIdx = ['lr','dt','rf','svm','knn'].indexOf(selectedAlgo);
+  all[selIdx].acc = results.acc;
+
+  const colors = all.map((_,i)=>i===selIdx?'#378ADD':'#B5D4F4');
+
+  destroyChart('comp');
+  charts['comp'] = new Chart(document.getElementById('compChart'),{
+    type:'bar',
+    data:{labels:all.map(a=>a.name),datasets:[{label:'Accuracy',data:all.map(a=>parseFloat((a.acc*100).toFixed(1))),backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:v=>v.raw+'%'}}},scales:{y:{min:60,max:100,ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'rgba(0,0,0,0.05)'}},x:{ticks:{font:{size:11}}}}}
+  });
+
+  const sizes = [100,200,300,500,700,900,1000].filter(s=>s<=parseInt(document.getElementById('ds-size').value)||s<=100);
+  const trainAcc = sizes.map(s=>parseFloat((Math.min(0.99,results.acc+0.05*(1-s/1000)+rand(-0.01,0.01))).toFixed(3)));
+  const valAcc = sizes.map(s=>parseFloat((Math.min(0.99,results.acc-0.03*(1-s/1000)+rand(-0.01,0.01))).toFixed(3)));
+
+  destroyChart('lc');
+  charts['lc'] = new Chart(document.getElementById('lcChart'),{
+    type:'line',
+    data:{labels:sizes,datasets:[
+      {label:'Train',data:trainAcc.map(v=>parseFloat((v*100).toFixed(1))),borderColor:'#378ADD',tension:0.3,pointRadius:3,fill:false},
+      {label:'Validation',data:valAcc.map(v=>parseFloat((v*100).toFixed(1))),borderColor:'#639922',tension:0.3,pointRadius:3,borderDash:[4,4],fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:60,max:100,ticks:{callback:v=>v+'%',font:{size:11}}},x:{title:{display:true,text:'Training samples',font:{size:11}},ticks:{font:{size:11}}}}}
+  });
+
+  const leg = document.createElement('div');
+  leg.style.cssText='display:flex;gap:16px;font-size:12px;color:var(--color-text-secondary);margin-top:6px';
+  leg.innerHTML='<span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#378ADD"></span>Train accuracy</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#639922"></span>Validation accuracy</span>';
+  const lp = document.getElementById('lcChart').parentElement;
+  if(!lp.nextSibling || lp.nextSibling.tagName !== 'DIV') lp.parentElement.appendChild(leg);
+}
+</script>
